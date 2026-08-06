@@ -111,18 +111,11 @@
       ansible.builtin.shell:
         cmd: "bash /opt/frankendancer/deps.sh fetch check install"
 
-    - name: Build Frankendancer dependencies (RocksDB, LZ4, etc.)
-      ansible.builtin.make:
+    - name: Build Frankendancer dependencies and binaries
+      ansible.builtin.command:
+        cmd: /usr/bin/make fdctl solana
         chdir: "{{ frankendancer_src_dir }}"
-        target: deps
 
-    - name: Build fdctl and solana binaries
-      ansible.builtin.make:
-        chdir: "{{ frankendancer_src_dir }}"
-        targets:
-          - fdctl
-          - solana    
-          
     - name: Create symlink for fdctl
       ansible.builtin.file:
         src: /opt/frankendancer/build/native/gcc/obj/app/fdctl
