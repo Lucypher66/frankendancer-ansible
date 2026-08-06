@@ -13,3 +13,10 @@
     - name: Set stable toolchain as default
       ansible.builtin.shell:
         cmd: "rustup default stable"
+    - name: Check if cargo works
+      ansible.builtin.shell:
+        cmd: "echo $?"
+        register: cargo_status
+    - name: __DEBUG__ Check cargo variable value
+      ansible.builtin.debug:
+        msg: {{ cargo_status }}
