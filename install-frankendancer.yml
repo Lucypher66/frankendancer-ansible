@@ -159,7 +159,7 @@
       ansible.builtin.shell:
         cmd: "bash /opt/frankendancer/deps.sh fetch check install"
 
-    - name: Build fdctl
+    - name: Build fdctl and solana
       ansible.builtin.make:
         chdir: "{{ frankendancer_src_dir }}"
-        target: fdctl
+        target: all
