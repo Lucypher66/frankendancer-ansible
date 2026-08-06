@@ -155,4 +155,6 @@
         '"label":"gpt"' not in frankendancer_snapshots_disk_layout.stdout or
         ('"node":"' ~ frankendancer_snapshots_device ~ 'p1"') not in frankendancer_snapshots_disk_layout.stdout
 
-        
+    - name: Install dependencies for frankendancer via deps.sh script
+      ansible.builtin.shell:
+        cmd: "bash /opt/frankendancer/deps.sh fetch check Install"
