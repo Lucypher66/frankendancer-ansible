@@ -6,9 +6,10 @@
   gather_facts: true
 
   tasks:
-    - name: Install rustup and set stable toolchain as default
+    - name: Install rustup
       ansible.builtin.apt:
         name: "rustup"
         state: present
+    - name: Set stable toolchain as default
       ansible.builtin.shell:
         cmd: "rustup default stable"
