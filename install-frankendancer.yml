@@ -16,8 +16,8 @@
           rustup default stable
           cargo
           echo $?
-        register: cargo_status
-        changed_when: false
+      register: cargo_status
+      changed_when: false
     - name: __DEBUG__ Check cargo variable value
       ansible.builtin.debug:
         msg: "{{ cargo_status }}"
