@@ -165,6 +165,6 @@
         target: all
 
     - name: Get default.toml from github
-      ansible.builtin.url_get:
+      ansible.builtin.get_url:
         url: https://raw.githubusercontent.com/firedancer-io/firedancer/refs/heads/main/src/app/fdctl/config/default.toml
-        dest: "{{ frankendancer_src_dir }}"
+        dest: "{{ frankendancer_src_dir }}/default.toml"
