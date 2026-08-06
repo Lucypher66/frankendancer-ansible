@@ -118,7 +118,7 @@
 
     - name: Create symlink for fdctl
       ansible.builtin.file:
-        src: /opt/frankendancer/build/native/gcc/obj/app/fdctl
+        src: /opt/frankendancer/build/native/gcc/bin/fdctl
         dest: /bin/fdctl
         owner: root
         group: root
@@ -126,7 +126,7 @@
 
     - name: Create symlink for solana
       ansible.builtin.file:
-        src: /opt/frankendancer/build/native/gcc/obj/app/fdctl
+        src: /opt/frankendancer/build/native/gcc/bin/fdctl
         dest: /bin/fdctl
         owner: root
         group: root
