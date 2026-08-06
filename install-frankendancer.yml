@@ -6,6 +6,9 @@
   gather_facts: true
 
   tasks:
+    - name: Update apt repositories
+      ansible.builtin.apt:
+        update_cache: yes
     - name: Install rustup
       ansible.builtin.apt:
         name: "rustup"
