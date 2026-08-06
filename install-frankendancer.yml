@@ -69,6 +69,36 @@
         name: make
         state: present
 
+    - name: Install build-essential
+      ansible.builtin.apt:
+        name: build-essential
+        state: present
+
+    - name: Install pkgconf
+      ansible.builtin.apt:
+        name: pkgconf
+        state: present
+
+    - name: Install cmake
+      ansible.builtin.apt:
+        name: cmake
+        state: present
+
+    - name: Install libclang-dev
+      ansible.builtin.apt:
+        name: libclang-dev
+        state: present
+
+    - name: Install libudev-dev
+      ansible.builtin.apt:
+        name: libudev-dev
+        state: present
+
+    - name: Install protobuf-compiler
+      ansible.builtin.apt:
+        name: protobuf-compiler
+        state: present
+
     - name: Clone Frankendancer repository with submodules
       ansible.builtin.git:
         repo: "{{ frankendancer_repo_url }}"
