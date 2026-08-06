@@ -19,4 +19,4 @@
         register: cargo_status
     - name: __DEBUG__ Check cargo variable value
       ansible.builtin.debug:
-        msg: {{ cargo_status }}
+        msg: "{{ cargo_status }}"
