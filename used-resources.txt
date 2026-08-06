@@ -1,0 +1,2 @@
+https://docs.firedancer.io/guide/getting-started.html # Frankendancer installation guide
+https://rust-lang.github.io/rustup/installation/other.html # Rustup installation guide

@@ -1,0 +1,12 @@
+---
+- name: Frankendancer Installation
+  hosts: all
+  become: true
+  become_user: root
+  gather_facts: true
+
+  tasks:
+    - name: Install rustup
+      ansible.builtin.apt:
+        name: "rustup"
+        state: present
