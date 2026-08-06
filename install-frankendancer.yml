@@ -150,6 +150,10 @@
         block: |
           blacklist irdma
 
+    - name: Initialize Frankendancer
+      ansible.builtin.shell:
+        cmd: "fdctl configure init all"
+
     - name: Get default.toml from github
       ansible.builtin.get_url:
         url: https://raw.githubusercontent.com/firedancer-io/firedancer/refs/heads/main/src/app/fdctl/config/default.toml
