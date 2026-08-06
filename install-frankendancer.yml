@@ -107,6 +107,20 @@
         recursive: true
         update: true
 
+    - name: Install dependencies for frankendancer via deps.sh script
+      ansible.builtin.shell:
+        cmd: "bash /opt/frankendancer/deps.sh fetch check install"
+
+    - name: Build fdctl and solana
+      ansible.builtin.make:
+        chdir: "{{ frankendancer_src_dir }}"
+        target: fdctl solana
+
+    - name: Get default.toml from github
+      ansible.builtin.get_url:
+        url: https://raw.githubusercontent.com/firedancer-io/firedancer/refs/heads/main/src/app/fdctl/config/default.toml
+        dest: "{{ frankendancer_src_dir }}/default.toml"
+
     - name: Inspect accounts disk layout
       ansible.builtin.command:
         cmd: "sfdisk --json {{ frankendancer_accounts_device }}"
@@ -155,16 +169,3 @@
         '"label":"gpt"' not in frankendancer_snapshots_disk_layout.stdout or
         ('"node":"' ~ frankendancer_snapshots_device ~ 'p1"') not in frankendancer_snapshots_disk_layout.stdout
 
-    - name: Install dependencies for frankendancer via deps.sh script
-      ansible.builtin.shell:
-        cmd: "bash /opt/frankendancer/deps.sh fetch check install"
-
-    - name: Build fdctl and solana
-      ansible.builtin.make:
-        chdir: "{{ frankendancer_src_dir }}"
-        target: all
-
-    - name: Get default.toml from github
-      ansible.builtin.get_url:
-        url: https://raw.githubusercontent.com/firedancer-io/firedancer/refs/heads/main/src/app/fdctl/config/default.toml
-        dest: "{{ frankendancer_src_dir }}/default.toml"
