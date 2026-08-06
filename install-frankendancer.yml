@@ -20,6 +20,6 @@
         cmd: echo $?
       register: cargo_status
       changed_when: false
-    - name: __DEBUG__ Check cargo variable value
+    - name: Show only cargo_status stdout
       ansible.builtin.debug:
         msg: "{{ cargo_status.stdout }}"
