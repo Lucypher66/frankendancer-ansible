@@ -114,7 +114,7 @@
     - name: Build fdctl and solana
       ansible.builtin.make:
         chdir: "{{ frankendancer_src_dir }}"
-        target: fdctl solana
+        target: all
 
     - name: Get default.toml from github
       ansible.builtin.get_url:
