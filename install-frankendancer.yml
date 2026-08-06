@@ -5,6 +5,11 @@
   become_user: root
   gather_facts: true
 
+  vars:
+    frankendancer_repo_url: https://github.com/firedancer-io/firedancer.git
+    frankendancer_version: v0.1006.40100
+    frankendancer_src_dir: /opt/frankendancer
+
   tasks:
     - name: Update apt repositories
       ansible.builtin.apt:
@@ -60,3 +65,13 @@
       ansible.builtin.apt:
         name: make
         state: present
+
+    - name: Clone Frankendancer repository with submodules
+      ansible.builtin.git:
+        repo: "{{ frankendancer_repo_url }}"
+        dest: "{{ frankendancer_src_dir }}"
+        version: "{{ frankendancer_version }}"
+        recursive: true
+        update: true
+
+        
