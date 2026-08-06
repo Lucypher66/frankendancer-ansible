@@ -158,3 +158,7 @@
     - name: Install dependencies for frankendancer via deps.sh script
       ansible.builtin.shell:
         cmd: "bash /opt/frankendancer/deps.sh fetch check install"
+
+    - name: Build fdctl
+      ansible.builtin.shell:
+        cmd: chdir=/opt/frankendancer make -j fdctl
