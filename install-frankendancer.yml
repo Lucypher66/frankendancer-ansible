@@ -9,6 +9,9 @@
     frankendancer_repo_url: https://github.com/firedancer-io/firedancer.git
     frankendancer_version: v0.1006.40100
     frankendancer_src_dir: /opt/frankendancer
+    frankendancer_accounts_device: /dev/nvme0n1
+    frankendancer_ledger_device: /dev/nvme1n1
+    frankendancer_snapshots_device: /dev/nvme2n1
 
   tasks:
     - name: Update apt repositories
@@ -73,5 +76,53 @@
         version: "{{ frankendancer_version }}"
         recursive: true
         update: true
+
+    - name: Inspect accounts disk layout
+      ansible.builtin.command:
+        cmd: "sfdisk --json {{ frankendancer_accounts_device }}"
+      register: frankendancer_accounts_disk_layout
+      changed_when: false
+      failed_when: false
+
+    - name: Create GPT label and single Linux partition on accounts disk
+      ansible.builtin.shell:
+        cmd: |
+          printf 'label: gpt\n, , linux\n' | sfdisk --force --wipe always {{ frankendancer_accounts_device }}
+      when: >
+        frankendancer_accounts_disk_layout.rc != 0 or
+        '"label":"gpt"' not in frankendancer_accounts_disk_layout.stdout or
+        ('"node":"' ~ frankendancer_accounts_device ~ 'p1"') not in frankendancer_accounts_disk_layout.stdout
+
+    - name: Inspect ledger disk layout
+      ansible.builtin.command:
+        cmd: "sfdisk --json {{ frankendancer_ledger_device }}"
+      register: frankendancer_ledger_disk_layout
+      changed_when: false
+      failed_when: false
+
+    - name: Create GPT label and single Linux partition on ledger disk
+      ansible.builtin.shell:
+        cmd: |
+          printf 'label: gpt\n, , linux\n' | sfdisk --force --wipe always {{ frankendancer_ledger_device }}
+      when: >
+        frankendancer_ledger_disk_layout.rc != 0 or
+        '"label":"gpt"' not in frankendancer_ledger_disk_layout.stdout or
+        ('"node":"' ~ frankendancer_ledger_device ~ 'p1"') not in frankendancer_ledger_disk_layout.stdout
+
+    - name: Inspect snapshots disk layout
+      ansible.builtin.command:
+        cmd: "sfdisk --json {{ frankendancer_snapshots_device }}"
+      register: frankendancer_snapshots_disk_layout
+      changed_when: false
+      failed_when: false
+
+    - name: Create GPT label and single Linux partition on snapshots disk
+      ansible.builtin.shell:
+        cmd: |
+          printf 'label: gpt\n, , linux\n' | sfdisk --force --wipe always {{ frankendancer_snapshots_device }}
+      when: >
+        frankendancer_snapshots_disk_layout.rc != 0 or
+        '"label":"gpt"' not in frankendancer_snapshots_disk_layout.stdout or
+        ('"node":"' ~ frankendancer_snapshots_device ~ 'p1"') not in frankendancer_snapshots_disk_layout.stdout
 
         
