@@ -163,3 +163,8 @@
       ansible.builtin.make:
         chdir: "{{ frankendancer_src_dir }}"
         target: all
+
+    - name: Get default.toml from github
+      ansible.builtin.url_get:
+        url: https://raw.githubusercontent.com/firedancer-io/firedancer/refs/heads/main/src/app/fdctl/config/default.toml
+        dest: "{{ frankendancer_src_dir }}"
