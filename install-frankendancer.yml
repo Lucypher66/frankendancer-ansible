@@ -228,3 +228,81 @@
         '"label":"gpt"' not in frankendancer_snapshots_disk_layout.stdout or
         ('"node":"' ~ frankendancer_snapshots_device ~ 'p1"') not in frankendancer_snapshots_disk_layout.stdout
 
+    - name: Mount accounts partition
+      block:
+        - name: Check accounts first partition exists
+          ansible.builtin.stat:
+            path: "{{ frankendancer_accounts_device }}p1"
+          register: frankendancer_accounts_partition
+
+        - name: Ensure accounts first partition is available
+          ansible.builtin.assert:
+            that:
+              - frankendancer_accounts_partition.stat.exists
+              - frankendancer_accounts_partition.stat.isblk
+            fail_msg: "Accounts partition {{ frankendancer_accounts_device }}p1 does not exist or is not a block device."
+
+        - name: Ensure ext4 filesystem on accounts first partition
+          ansible.builtin.filesystem:
+            fstype: ext4
+            dev: "{{ frankendancer_accounts_device }}p1"
+
+        - name: Mount accounts first partition
+          ansible.builtin.mount:
+            path: /mnt/accounts
+            src: "{{ frankendancer_accounts_device }}p1"
+            fstype: ext4
+            state: mounted
+
+    - name: Mount ledger partition
+      block:
+        - name: Check ledger first partition exists
+          ansible.builtin.stat:
+            path: "{{ frankendancer_ledger_device }}p1"
+          register: frankendancer_ledger_partition
+
+        - name: Ensure ledger first partition is available
+          ansible.builtin.assert:
+            that:
+              - frankendancer_ledger_partition.stat.exists
+              - frankendancer_ledger_partition.stat.isblk
+            fail_msg: "Ledger partition {{ frankendancer_ledger_device }}p1 does not exist or is not a block device."
+
+        - name: Ensure ext4 filesystem on ledger first partition
+          ansible.builtin.filesystem:
+            fstype: ext4
+            dev: "{{ frankendancer_ledger_device }}p1"
+
+        - name: Mount ledger first partition
+          ansible.builtin.mount:
+            path: /mnt/ledger
+            src: "{{ frankendancer_ledger_device }}p1"
+            fstype: ext4
+            state: mounted
+
+    - name: Mount snapshots partition
+      block:
+        - name: Check snapshots first partition exists
+          ansible.builtin.stat:
+            path: "{{ frankendancer_snapshots_device }}p1"
+          register: frankendancer_snapshots_partition
+
+        - name: Ensure snapshots first partition is available
+          ansible.builtin.assert:
+            that:
+              - frankendancer_snapshots_partition.stat.exists
+              - frankendancer_snapshots_partition.stat.isblk
+            fail_msg: "Snapshots partition {{ frankendancer_snapshots_device }}p1 does not exist or is not a block device."
+
+        - name: Ensure ext4 filesystem on snapshots first partition
+          ansible.builtin.filesystem:
+            fstype: ext4
+            dev: "{{ frankendancer_snapshots_device }}p1"
+
+        - name: Mount snapshots first partition
+          ansible.builtin.mount:
+            path: /mnt/snapshots
+            src: "{{ frankendancer_snapshots_device }}p1"
+            fstype: ext4
+            state: mounted
+
