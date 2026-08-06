@@ -15,10 +15,10 @@
         cmd: |
           rustup default stable
           cargo
-    - name: Check return value
+    - name: Register return value
       ansible.builtin.shell:
         cmd: echo $?
-      register: cargo_status
+      register: cargo_status.stdout
       changed_when: false
     - name: __DEBUG__ Check cargo variable value
       ansible.builtin.debug:
