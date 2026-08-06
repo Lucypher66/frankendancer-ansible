@@ -10,12 +10,14 @@
       ansible.builtin.apt:
         name: "rustup"
         state: present
-    - name: Set stable toolchain as default and check return value
+    - name: Set stable toolchain as default and run cargo for testing
       ansible.builtin.shell:
-        cmd: |
-          rustup default stable
-          cargo
-          echo $?
+      cmd: |
+        rustup default stable
+        cargo
+    - name: Check return value
+      ansible.builtin.shell:
+        cmd: echo $?
       register: cargo_status
       changed_when: false
     - name: __DEBUG__ Check cargo variable value
