@@ -114,7 +114,23 @@
     - name: Build fdctl and solana
       ansible.builtin.make:
         chdir: "{{ frankendancer_src_dir }}"
-        target: all
+        target: fdctl solana
+    
+    - name: Create symlink for fdctl
+      ansible.builtin.file:
+        src: /opt/frankendancer/build/native/gcc/obj/app/fdctl
+        dest: /bin/fdctl
+        owner: root
+        group: root
+        state: link
+
+#    - name: Create symlink for solana
+#      ansible.builtin.file:
+#        src: /opt/frankendancer/build/native/gcc/obj/app/fdctl
+#        dest: /bin/fdctl
+#        owner: root
+#        group: root
+#        state: link
 
     - name: Get default.toml from github
       ansible.builtin.get_url:
