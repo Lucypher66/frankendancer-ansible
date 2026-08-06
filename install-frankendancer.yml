@@ -157,4 +157,4 @@
 
     - name: Install dependencies for frankendancer via deps.sh script
       ansible.builtin.shell:
-        cmd: "bash /opt/frankendancer/deps.sh fetch check Install"
+        cmd: "bash /opt/frankendancer/deps.sh fetch check install"
