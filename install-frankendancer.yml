@@ -45,3 +45,18 @@
     - name: __DEBUG__ Show only cargo_status stdout
       ansible.builtin.debug:
         msg: "{{ cargo_status.stdout }}"
+
+    - name: Install git
+      ansible.builtin.apt:
+        name: git
+        state: present
+
+    - name: Install clang
+      ansible.builtin.apt:
+        name: clang
+        state: present
+
+    - name: Install make
+      ansible.builtin.apt:
+        name: make
+        state: present
