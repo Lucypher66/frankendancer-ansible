@@ -9,20 +9,29 @@
     - name: Update apt repositories
       ansible.builtin.apt:
         update_cache: yes
+
+    - name: Install gcc
+      ansible.builtin.apt:
+        name: "gcc"
+        state: present
+
     - name: Install rustup
       ansible.builtin.apt:
         name: "rustup"
         state: present
+    
     - name: Set stable toolchain as default and run cargo for testing
       ansible.builtin.shell:
         cmd: |
           rustup default stable
           cargo
+    
     - name: Register return value
       ansible.builtin.shell:
         cmd: echo $?
       register: cargo_status
       changed_when: false
+    
     - name: __DEBUG__ Show only cargo_status stdout
       ansible.builtin.debug:
         msg: "{{ cargo_status.stdout }}"
