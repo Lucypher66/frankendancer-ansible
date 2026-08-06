@@ -114,8 +114,12 @@
     - name: Build fdctl and solana
       ansible.builtin.make:
         chdir: "{{ frankendancer_src_dir }}"
-        target: fdctl solana
-    
+        target: "fdctl solana"
+      environment:
+        PATH: "/usr/local/bin:/usr/bin:/bin:{{ ansible_env.PATH }}"
+        PKG_CONFIG_PATH: "/usr/local/lib/pkgconfig:/usr/lib/pkgconfig"
+        LD_LIBRARY_PATH: "/usr/local/lib"
+        
     - name: Create symlink for fdctl
       ansible.builtin.file:
         src: /opt/frankendancer/build/native/gcc/obj/app/fdctl
