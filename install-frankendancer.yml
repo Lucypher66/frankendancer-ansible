@@ -132,6 +132,24 @@
         group: root
         state: link
 
+    - name: Remove irdma kernel module from running system
+      ansible.builtin.shell:
+        cmd: "rmmod irdma"
+
+    - name: Create /etc/modprobe.d/no_irdma.conf
+      ansible.builtin.file:
+        path: /etc/modprobe.d/no_irdma.conf
+        state: touch
+        owner: root
+        group: root
+
+    - name: Blacklist irdma kernel module
+      ansible.builtin.blockinfile:
+        path: /etc/modprobe.d/no_irdma.conf
+        marker: "# {mark} ANSIBLE MANAGED BLOCK: blacklist irdma"
+        block: |
+          blacklist irdma
+
     - name: Get default.toml from github
       ansible.builtin.get_url:
         url: https://raw.githubusercontent.com/firedancer-io/firedancer/refs/heads/main/src/app/fdctl/config/default.toml
