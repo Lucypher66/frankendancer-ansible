@@ -18,8 +18,8 @@
     - name: Register gcc major version
       ansible.builtin.shell:
         cmd: "dpkg -l gcc | tail -n1 |cut -d ' ' -f15 | cut -d ':' -f2 |cut -d '-' -f1 | cut -d '.' -f1"
-        register: gcc_major_version
-        changed_when: false
+      register: gcc_major_version
+      changed_when: false
 
     - name: __DEBUG__ Show only gcc_major_version stdout
       ansible.builtin.debug:
