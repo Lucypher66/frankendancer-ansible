@@ -18,8 +18,8 @@
     - name: Register return value
       ansible.builtin.shell:
         cmd: echo $?
-      register: cargo_status.stdout
+      register: cargo_status
       changed_when: false
     - name: __DEBUG__ Check cargo variable value
       ansible.builtin.debug:
-        msg: "{{ cargo_status }}"
+        msg: "{{ cargo_status.stdout }}"
