@@ -252,6 +252,10 @@
             path: /mnt/accounts
             src: "{{ frankendancer_accounts_device }}p1"
             fstype: ext4
+            opts: defaults
+            boot: true
+            dump: "0"
+            passno: "2"
             state: mounted
 
     - name: Mount ledger partition
@@ -278,6 +282,10 @@
             path: /mnt/ledger
             src: "{{ frankendancer_ledger_device }}p1"
             fstype: ext4
+            opts: defaults
+            boot: true
+            dump: "0"
+            passno: "2"
             state: mounted
 
     - name: Mount snapshots partition
@@ -304,5 +312,9 @@
             path: /mnt/snapshots
             src: "{{ frankendancer_snapshots_device }}p1"
             fstype: ext4
+            opts: defaults
+            boot: true
+            dump: "0"
+            passno: "2"
             state: mounted
 
