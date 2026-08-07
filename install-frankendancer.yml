@@ -440,7 +440,7 @@
 
           [rpc]
           port = {{ frankendancer_rpc_port }}
-          full_api = true
+          full_api = false
           private = true
           bind_address = "127.0.0.1"
           only_known = true
