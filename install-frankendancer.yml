@@ -45,7 +45,7 @@
     frankendancer_gui_enabled: true
     frankendancer_gui_listen_address: 127.0.0.1
     frankendancer_gui_listen_port: 8080
-    frankendancer_rpc_port: 10101
+    frankendancer_rpc_port: 8899
     frankendancer_expected_genesis_hash: 5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d
     frankendancer_solana_metrics_config: "host=https://metrics.solana.com:8086,db=mainnet-beta,u=mainnet-beta_write,p=password"
     frankendancer_service_name: frankendancer.service
@@ -443,6 +443,10 @@
           full_api = true
           private = true
           bind_address = "127.0.0.1"
+          only_known = true
+          transaction_history = false
+          extended_tx_metadata_storage = false
+          bigtable_ledger_storage = false
 
           [tiles.gui]
           enabled = {{ frankendancer_gui_enabled | lower }}

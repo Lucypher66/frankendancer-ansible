@@ -4,6 +4,6 @@ https://docs.firedancer.io/guide/configuring.html # Firedancer installation guid
 https://rust-lang.github.io/rustup/installation/other.html # Rustup installation guide
 https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_variables.html # Ansible documentation for usage of variables
 https://github.com/firedancer-io/firedancer # Firedancer repo
-Copilot AI to write tasks in order to save time
+Copilot AI to write tasks in order to save time and refer to unknown terms as well as summarizing information
 https://docs.ansible.com/projects/ansible/latest/collections/community/general/make_module.html # Ansible documentation for usage of make module
 https://docs.solanalabs.com/clusters/available # Solana 
