@@ -17,9 +17,21 @@
     frankendancer_accounts_mount_path: /mnt/accounts
     frankendancer_ledger_mount_path: /mnt/ledger
     frankendancer_snapshots_mount_path: /mnt/snapshots
+    frankendancer_hugetlbfs_mount_path: /mnt/.fd
+    frankendancer_hugetlbfs_max_page_size: gigantic
+    frankendancer_hugetlbfs_gigantic_page_threshold_mib: 128
     frankendancer_home_dir: "/home/{{ frankendancer_run_user }}"
     frankendancer_run_user: frankendancer
     frankendancer_identity_path: "{{ frankendancer_home_dir }}/validator-keypair.json"
+    frankendancer_layout_affinity: 1-55
+    frankendancer_layout_agave_affinity: 56-63
+    frankendancer_layout_blocklist_cores: 0h
+    frankendancer_layout_agave_unified_scheduler_handler_threads: 4
+    frankendancer_layout_net_tile_count: 1
+    frankendancer_layout_quic_tile_count: 1
+    frankendancer_layout_verify_tile_count: 40
+    frankendancer_layout_bank_tile_count: 4
+    frankendancer_layout_shred_tile_count: 1
     frankendancer_gossip_port: 8001
     frankendancer_rpc_port: 10101
     frankendancer_expected_genesis_hash: 5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d
@@ -189,6 +201,22 @@
         marker: "# {mark} ANSIBLE MANAGED BLOCK: Frankendancer config"
         block: |
           user = "{{ frankendancer_run_user }}"
+
+          [hugetlbfs]
+          mount_path = "{{ frankendancer_hugetlbfs_mount_path }}"
+          max_page_size = "{{ frankendancer_hugetlbfs_max_page_size }}"
+          gigantic_page_threshold_mib = {{ frankendancer_hugetlbfs_gigantic_page_threshold_mib }}
+
+          [layout]
+          affinity = "{{ frankendancer_layout_affinity }}"
+          agave_affinity = "{{ frankendancer_layout_agave_affinity }}"
+          blocklist_cores = "{{ frankendancer_layout_blocklist_cores }}"
+          agave_unified_scheduler_handler_threads = {{ frankendancer_layout_agave_unified_scheduler_handler_threads }}
+          net_tile_count = {{ frankendancer_layout_net_tile_count }}
+          quic_tile_count = {{ frankendancer_layout_quic_tile_count }}
+          verify_tile_count = {{ frankendancer_layout_verify_tile_count }}
+          bank_tile_count = {{ frankendancer_layout_bank_tile_count }}
+          shred_tile_count = {{ frankendancer_layout_shred_tile_count }}
 
           [gossip]
           entrypoints = [
