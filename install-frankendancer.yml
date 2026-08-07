@@ -32,7 +32,19 @@
     frankendancer_layout_verify_tile_count: 40
     frankendancer_layout_bank_tile_count: 4
     frankendancer_layout_shred_tile_count: 1
+    frankendancer_nginx_rpc_server_name: assigment-01.usetest.dev
+    frankendancer_nginx_rpc_listen_port: 80
+    frankendancer_nginx_rpc_tls_listen_port: 443
+    frankendancer_certbot_email: ""
+    frankendancer_certbot_webroot_path: /var/www/certbot
+    frankendancer_certbot_reload_hook_path: /etc/letsencrypt/renewal-hooks/deploy/reload-nginx.sh
+    frankendancer_letsencrypt_live_path: "/etc/letsencrypt/live/{{ frankendancer_nginx_rpc_server_name }}"
+    frankendancer_letsencrypt_fullchain_path: "{{ frankendancer_letsencrypt_live_path }}/fullchain.pem"
+    frankendancer_letsencrypt_privkey_path: "{{ frankendancer_letsencrypt_live_path }}/privkey.pem"
     frankendancer_gossip_port: 8001
+    frankendancer_gui_enabled: true
+    frankendancer_gui_listen_address: 127.0.0.1
+    frankendancer_gui_listen_port: 8080
     frankendancer_rpc_port: 10101
     frankendancer_expected_genesis_hash: 5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d
     frankendancer_solana_metrics_config: "host=https://metrics.solana.com:8086,db=mainnet-beta,u=mainnet-beta_write,p=password"
@@ -53,6 +65,190 @@
     - name: Update apt repositories
       ansible.builtin.apt:
         update_cache: yes
+
+    - name: Upgrade all packages to the latest version
+      ansible.builtin.apt:
+        upgrade: dist
+        autoremove: yes
+
+    - name: Install nginx and certbot
+      ansible.builtin.apt:
+        name:
+          - nginx
+          - certbot
+        state: present
+    
+    - name: Ensure nginx is running and enabled
+      ansible.builtin.systemd:
+        name: nginx
+        state: started
+        enabled: true
+
+    - name: Create certbot webroot directory
+      ansible.builtin.file:
+        path: "{{ frankendancer_certbot_webroot_path }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Configure bootstrap nginx reverse proxy for Frankendancer RPC
+      ansible.builtin.copy:
+        dest: /etc/nginx/sites-available/frankendancer-rpc
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          server {
+              listen {{ frankendancer_nginx_rpc_listen_port }} default_server;
+              listen [::]:{{ frankendancer_nginx_rpc_listen_port }} default_server;
+              server_name {{ frankendancer_nginx_rpc_server_name }};
+
+              location ^~ /.well-known/acme-challenge/ {
+                  root {{ frankendancer_certbot_webroot_path }};
+                  default_type text/plain;
+              }
+
+              location / {
+                  proxy_pass http://127.0.0.1:{{ frankendancer_rpc_port }};
+                  proxy_http_version 1.1;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $scheme;
+                  proxy_connect_timeout 5s;
+                  proxy_read_timeout 300s;
+                  proxy_send_timeout 300s;
+              }
+          }
+
+    - name: Enable nginx reverse proxy site for Frankendancer RPC
+      ansible.builtin.file:
+        src: /etc/nginx/sites-available/frankendancer-rpc
+        dest: /etc/nginx/sites-enabled/frankendancer-rpc
+        state: link
+
+    - name: Disable default nginx site
+      ansible.builtin.file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+
+    - name: Validate nginx configuration
+      ansible.builtin.command:
+        cmd: nginx -t
+      changed_when: false
+
+    - name: Reload nginx after RPC proxy configuration
+      ansible.builtin.systemd:
+        name: nginx
+        state: reloaded
+
+    - name: Request Let's Encrypt certificate with certbot using account email
+      ansible.builtin.command:
+        cmd: >-
+          certbot certonly --webroot -w {{ frankendancer_certbot_webroot_path }}
+          -d {{ frankendancer_nginx_rpc_server_name }}
+          --email {{ frankendancer_certbot_email }}
+          --agree-tos --non-interactive
+      args:
+        creates: "{{ frankendancer_letsencrypt_fullchain_path }}"
+      when: frankendancer_certbot_email | length > 0
+
+    - name: Request Let's Encrypt certificate with certbot without account email
+      ansible.builtin.command:
+        cmd: >-
+          certbot certonly --webroot -w {{ frankendancer_certbot_webroot_path }}
+          -d {{ frankendancer_nginx_rpc_server_name }}
+          --register-unsafely-without-email
+          --agree-tos --non-interactive
+      args:
+        creates: "{{ frankendancer_letsencrypt_fullchain_path }}"
+      when: frankendancer_certbot_email | length == 0
+
+    - name: Configure final nginx HTTPS reverse proxy for Frankendancer RPC
+      ansible.builtin.copy:
+        dest: /etc/nginx/sites-available/frankendancer-rpc
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          server {
+              listen {{ frankendancer_nginx_rpc_listen_port }} default_server;
+              listen [::]:{{ frankendancer_nginx_rpc_listen_port }} default_server;
+              server_name {{ frankendancer_nginx_rpc_server_name }};
+
+              location ^~ /.well-known/acme-challenge/ {
+                  root {{ frankendancer_certbot_webroot_path }};
+                  default_type text/plain;
+              }
+
+              location / {
+                  return 301 https://$host$request_uri;
+              }
+          }
+
+          server {
+              listen {{ frankendancer_nginx_rpc_tls_listen_port }} ssl http2;
+              listen [::]:{{ frankendancer_nginx_rpc_tls_listen_port }} ssl http2;
+              server_name {{ frankendancer_nginx_rpc_server_name }};
+
+              ssl_certificate {{ frankendancer_letsencrypt_fullchain_path }};
+              ssl_certificate_key {{ frankendancer_letsencrypt_privkey_path }};
+              ssl_session_cache shared:nginx_ssl_cache:10m;
+              ssl_session_timeout 1d;
+              ssl_protocols TLSv1.2 TLSv1.3;
+              ssl_prefer_server_ciphers off;
+
+              location / {
+                  proxy_pass http://127.0.0.1:{{ frankendancer_rpc_port }};
+                  proxy_http_version 1.1;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $scheme;
+                  proxy_connect_timeout 5s;
+                  proxy_read_timeout 300s;
+                  proxy_send_timeout 300s;
+              }
+          }
+
+    - name: Validate final nginx configuration
+      ansible.builtin.command:
+        cmd: nginx -t
+      changed_when: false
+
+    - name: Reload nginx after installing TLS configuration
+      ansible.builtin.systemd:
+        name: nginx
+        state: reloaded
+
+    - name: Install certbot deploy hook to reload nginx after renewals
+      ansible.builtin.copy:
+        dest: "{{ frankendancer_certbot_reload_hook_path }}"
+        owner: root
+        group: root
+        mode: "0755"
+        content: |
+          #!/bin/sh
+          set -eu
+          systemctl reload nginx
+
+    - name: Ensure certbot renewal timer is enabled and running
+      ansible.builtin.systemd:
+        name: certbot.timer
+        enabled: true
+        state: started
+
+    - name: Check whether Let's Encrypt certificate has been issued
+      ansible.builtin.stat:
+        path: "{{ frankendancer_letsencrypt_fullchain_path }}"
+      register: frankendancer_letsencrypt_fullchain_stat
+
+    - name: Verify certbot renewal path with dry run
+      ansible.builtin.command:
+        cmd: certbot renew --dry-run
+      changed_when: false
+      when: frankendancer_letsencrypt_fullchain_stat.stat.exists
 
     - name: Install gcc
       ansible.builtin.apt:
@@ -238,6 +434,11 @@
           full_api = true
           private = true
           bind_address = "127.0.0.1"
+
+          [tiles.gui]
+          enabled = {{ frankendancer_gui_enabled | lower }}
+          gui_listen_address = "{{ frankendancer_gui_listen_address }}"
+          gui_listen_port = {{ frankendancer_gui_listen_port }}
 
           [reporting]
           solana_metrics_config = "{{ frankendancer_solana_metrics_config }}"
