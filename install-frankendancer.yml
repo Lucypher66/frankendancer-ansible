@@ -9,9 +9,33 @@
     frankendancer_repo_url: https://github.com/firedancer-io/firedancer.git
     frankendancer_version: v0.1006.40100
     frankendancer_src_dir: /opt/frankendancer
+    frankendancer_config_path: "{{ frankendancer_src_dir }}/config.toml"
+    frankendancer_fdctl_path: /bin/fdctl
     frankendancer_accounts_device: /dev/nvme0n1
     frankendancer_ledger_device: /dev/nvme1n1
     frankendancer_snapshots_device: /dev/nvme2n1
+    frankendancer_accounts_mount_path: /mnt/accounts
+    frankendancer_ledger_mount_path: /mnt/ledger
+    frankendancer_snapshots_mount_path: /mnt/snapshots
+    frankendancer_home_dir: "/home/{{ frankendancer_run_user }}"
+    frankendancer_run_user: frankendancer
+    frankendancer_identity_path: "{{ frankendancer_home_dir }}/validator-keypair.json"
+    frankendancer_gossip_port: 8001
+    frankendancer_rpc_port: 10101
+    frankendancer_expected_genesis_hash: 5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d
+    frankendancer_solana_metrics_config: "host=https://metrics.solana.com:8086,db=mainnet-beta,u=mainnet-beta_write,p=password"
+    frankendancer_service_name: frankendancer.service
+    frankendancer_gossip_entrypoints:
+      - entrypoint.mainnet-beta.solana.com:8001
+      - entrypoint2.mainnet-beta.solana.com:8001
+      - entrypoint3.mainnet-beta.solana.com:8001
+      - entrypoint4.mainnet-beta.solana.com:8001
+      - entrypoint5.mainnet-beta.solana.com:8001
+    frankendancer_known_validators:
+      - 7Np41oeYqPefeNQEHSv1UDhYrehxin3NStELsSKCT4K2
+      - GdnSyH3YtwcxFvQrVVJMm1JhTS4QVX7MFsX56uJLUfiZ
+      - DE1bawNcRJB9rVm3buyMVfr8mBEoyyu73NBovf2oXJsJ
+      - CakcnaRDHka2gXyfbEd2d3xsvkJkqsLw2akB3zsN1D2S
 
   tasks:
     - name: Update apt repositories
@@ -109,7 +133,7 @@
 
     - name: Install dependencies for frankendancer via deps.sh script
       ansible.builtin.shell:
-        cmd: "bash /opt/frankendancer/deps.sh fetch check install"
+        cmd: "bash {{ frankendancer_src_dir }}/deps.sh fetch check install"
 
     - name: Build fdctl and solana binaries
       ansible.builtin.command:
@@ -118,15 +142,15 @@
 
     - name: Create symlink for fdctl
       ansible.builtin.file:
-        src: /opt/frankendancer/build/native/gcc/bin/fdctl
-        dest: /bin/fdctl
+        src: "{{ frankendancer_src_dir }}/build/native/gcc/bin/fdctl"
+        dest: "{{ frankendancer_fdctl_path }}"
         owner: root
         group: root
         state: link
 
     - name: Create symlink for solana
       ansible.builtin.file:
-        src: /opt/frankendancer/build/native/gcc/bin/solana
+        src: "{{ frankendancer_src_dir }}/build/native/gcc/bin/solana"
         dest: /bin/solana
         owner: root
         group: root
@@ -150,14 +174,61 @@
         block: |
           blacklist irdma
 
-    - name: Initialize Frankendancer
-      ansible.builtin.shell:
-        cmd: "fdctl configure init all"
+    - name: Ensure Frankendancer run user exists
+      ansible.builtin.user:
+        name: "{{ frankendancer_run_user }}"
+        home: "{{ frankendancer_home_dir }}"
+        create_home: true
+        shell: /usr/sbin/nologin
+        system: true
 
-    - name: Get default.toml from github
-      ansible.builtin.get_url:
-        url: https://raw.githubusercontent.com/firedancer-io/firedancer/refs/heads/main/src/app/fdctl/config/default.toml
-        dest: "{{ frankendancer_src_dir }}/default.toml"
+    - name: Create Frankendancer config.toml and fill with content
+      ansible.builtin.blockinfile:
+        path: "{{ frankendancer_config_path }}"
+        create: true
+        marker: "# {mark} ANSIBLE MANAGED BLOCK: Frankendancer config"
+        block: |
+          user = "{{ frankendancer_run_user }}"
+
+          [gossip]
+          entrypoints = [
+          {% for entrypoint in frankendancer_gossip_entrypoints %}
+            "{{ entrypoint }}",
+          {% endfor %}
+          ]
+          port = {{ frankendancer_gossip_port }}
+
+          [ledger]
+          path = "{{ frankendancer_ledger_mount_path }}"
+          accounts_path = "{{ frankendancer_accounts_mount_path }}"
+
+          [snapshots]
+          path = "{{ frankendancer_snapshots_mount_path }}"
+
+          [rpc]
+          port = {{ frankendancer_rpc_port }}
+          full_api = true
+          private = true
+          bind_address = "127.0.0.1"
+
+          [reporting]
+          solana_metrics_config = "{{ frankendancer_solana_metrics_config }}"
+
+          [consensus]
+          identity_path = "{{ frankendancer_identity_path }}"
+          snapshot_fetch = true
+          genesis_fetch = true
+          expected_genesis_hash = "{{ frankendancer_expected_genesis_hash }}"
+          known_validators = [
+          {% for validator in frankendancer_known_validators %}
+            "{{ validator }}",
+          {% endfor %}
+          ]
+
+    - name: Create Frankendancer identity keypair when missing
+      ansible.builtin.command:
+        cmd: "{{ frankendancer_fdctl_path }} keys new {{ frankendancer_identity_path }} --config {{ frankendancer_config_path }}"
+        creates: "{{ frankendancer_identity_path }}"
 
     - name: Inspect accounts disk layout
       ansible.builtin.command:
@@ -177,21 +248,21 @@
 
     - name: Create ledger mountpoint
       ansible.builtin.file:
-        path: /mnt/ledger
+        path: "{{ frankendancer_ledger_mount_path }}"
         state: directory
         owner: root
         group: root
 
     - name: Create accounts mountpoint
       ansible.builtin.file:
-        path: /mnt/accounts
+        path: "{{ frankendancer_accounts_mount_path }}"
         state: directory
         owner: root
         group: root
 
     - name: Create snapshots mountpoint
       ansible.builtin.file:
-        path: /mnt/snapshots
+        path: "{{ frankendancer_snapshots_mount_path }}"
         state: directory
         owner: root
         group: root
@@ -249,7 +320,7 @@
 
         - name: Mount accounts first partition
           ansible.builtin.mount:
-            path: /mnt/accounts
+            path: "{{ frankendancer_accounts_mount_path }}"
             src: "{{ frankendancer_accounts_device }}p1"
             fstype: ext4
             opts: defaults
@@ -279,7 +350,7 @@
 
         - name: Mount ledger first partition
           ansible.builtin.mount:
-            path: /mnt/ledger
+            path: "{{ frankendancer_ledger_mount_path }}"
             src: "{{ frankendancer_ledger_device }}p1"
             fstype: ext4
             opts: defaults
@@ -309,7 +380,7 @@
 
         - name: Mount snapshots first partition
           ansible.builtin.mount:
-            path: /mnt/snapshots
+            path: "{{ frankendancer_snapshots_mount_path }}"
             src: "{{ frankendancer_snapshots_device }}p1"
             fstype: ext4
             opts: defaults
@@ -317,4 +388,62 @@
             dump: "0"
             passno: "2"
             state: mounted
+
+    - name: Initialize Frankendancer
+      ansible.builtin.shell:
+        cmd: "{{ frankendancer_fdctl_path }} configure init all --config {{ frankendancer_config_path }}"
+
+    - name: Install Frankendancer systemd service
+      ansible.builtin.copy:
+        dest: "/etc/systemd/system/{{ frankendancer_service_name }}"
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          [Unit]
+          Description=Frankendancer full node and RPC service
+          Wants=network-online.target
+          After=network-online.target local-fs.target
+          RequiresMountsFor={{ frankendancer_accounts_mount_path }} {{ frankendancer_ledger_mount_path }} {{ frankendancer_snapshots_mount_path }}
+          ConditionPathExists={{ frankendancer_config_path }}
+          ConditionPathExists={{ frankendancer_identity_path }}
+
+          [Service]
+          Type=simple
+          ExecStartPre={{ frankendancer_fdctl_path }} configure init all --config {{ frankendancer_config_path }}
+          ExecStart={{ frankendancer_fdctl_path }} run --config {{ frankendancer_config_path }}
+          Restart=on-failure
+          RestartSec=10
+          LimitMEMLOCK=infinity
+          LimitNOFILE=1024000
+          TimeoutStopSec=120
+          KillMode=control-group
+
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Enable and start Frankendancer systemd service
+      ansible.builtin.systemd:
+        name: "{{ frankendancer_service_name }}"
+        daemon_reload: true
+        enabled: true
+        state: started
+
+    - name: Wait for Frankendancer systemd service to become active
+      ansible.builtin.command:
+        cmd: "systemctl is-active {{ frankendancer_service_name }}"
+      register: frankendancer_service_status
+      changed_when: false
+      retries: 12
+      delay: 10
+      until: frankendancer_service_status.stdout == "active"
+
+    - name: Verify Frankendancer responds to fdctl metrics
+      ansible.builtin.command:
+        cmd: "{{ frankendancer_fdctl_path }} metrics --config {{ frankendancer_config_path }}"
+      register: frankendancer_metrics
+      changed_when: false
+      retries: 6
+      delay: 10
+      until: frankendancer_metrics.rc == 0 and 'tile_pid' in frankendancer_metrics.stdout
 
