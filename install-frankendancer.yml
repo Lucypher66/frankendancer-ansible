@@ -23,7 +23,7 @@
     frankendancer_home_dir: "/home/{{ frankendancer_run_user }}"
     frankendancer_run_user: frankendancer
     frankendancer_identity_path: "{{ frankendancer_home_dir }}/validator-keypair.json"
-    frankendancer_layout_affinity: 1-55
+    frankendancer_layout_affinity: 1-58
     frankendancer_layout_agave_affinity: 56-63
     frankendancer_layout_blocklist_cores: 0h
     frankendancer_layout_agave_unified_scheduler_handler_threads: 4
