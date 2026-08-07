@@ -1,2 +1,0 @@
-gcc major version 11,12,13
-cargo returncode nicht gleich 0
