@@ -389,6 +389,19 @@
             passno: "2"
             state: mounted
 
+    - name: Ensure Firedancer data mountpoints are writable by runtime user
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ frankendancer_run_user }}"
+        group: "{{ frankendancer_run_user }}"
+        mode: "0755"
+        recurse: true
+      loop:
+        - "{{ frankendancer_accounts_mount_path }}"
+        - "{{ frankendancer_ledger_mount_path }}"
+        - "{{ frankendancer_snapshots_mount_path }}"
+
     - name: Initialize Frankendancer
       ansible.builtin.shell:
         cmd: "{{ frankendancer_fdctl_path }} configure init all --config {{ frankendancer_config_path }}"
