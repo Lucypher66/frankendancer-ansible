@@ -264,16 +264,6 @@
         name: "gcc"
         state: present
     
-    - name: Register gcc major version
-      ansible.builtin.shell:
-        cmd: "dpkg -l gcc | tail -n1 |cut -d ' ' -f15 | cut -d ':' -f2 |cut -d '-' -f1 | cut -d '.' -f1"
-      register: gcc_major_version
-      changed_when: false
-
-    - name: __DEBUG__ Show only gcc_major_version stdout
-      ansible.builtin.debug:
-        msg: "{{ gcc_major_version.stdout }}"
-
     - name: Install rustup
       ansible.builtin.apt:
         name: "rustup"
@@ -284,16 +274,6 @@
         cmd: |
           rustup default stable
           cargo
-    
-    - name: Register return value
-      ansible.builtin.shell:
-        cmd: echo $?
-      register: cargo_status
-      changed_when: false
-    
-    - name: __DEBUG__ Show only cargo_status stdout
-      ansible.builtin.debug:
-        msg: "{{ cargo_status.stdout }}"
 
     - name: Install git
       ansible.builtin.apt:
