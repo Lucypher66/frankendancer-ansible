@@ -143,6 +143,11 @@
         name: nginx
         state: reloaded
 
+    - name: Check whether Let's Encrypt certificate already exists
+      ansible.builtin.stat:
+        path: "{{ frankendancer_letsencrypt_fullchain_path }}"
+      register: frankendancer_existing_certificate_stat
+
     - name: Request Let's Encrypt certificate with certbot using account email
       ansible.builtin.command:
         cmd: >-
@@ -152,7 +157,9 @@
           --agree-tos --non-interactive
       args:
         creates: "{{ frankendancer_letsencrypt_fullchain_path }}"
-      when: frankendancer_certbot_email | length > 0
+      when:
+        - frankendancer_certbot_email | length > 0
+        - not frankendancer_existing_certificate_stat.stat.exists
 
     - name: Request Let's Encrypt certificate with certbot without account email
       ansible.builtin.command:
@@ -163,7 +170,9 @@
           --agree-tos --non-interactive
       args:
         creates: "{{ frankendancer_letsencrypt_fullchain_path }}"
-      when: frankendancer_certbot_email | length == 0
+      when:
+        - frankendancer_certbot_email | length == 0
+        - not frankendancer_existing_certificate_stat.stat.exists
 
     - name: Configure final nginx HTTPS reverse proxy for Frankendancer RPC
       ansible.builtin.copy:
